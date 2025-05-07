@@ -167,10 +167,13 @@ async function tryClaimWithCredential(bagKey, credSet) {
 async function claimRedBagIterating(bagKey) {
     console.log(`[RedBag] Attempting to claim bag ${bagKey} with all available credentials...`);
     let finalResult = { success: false, message: "No valid credentials could claim the bag.", claimedByCredId: null };
+    const attemptSummaries = []; // To store summary for each credential
 
     for (const credSet of credentialsConfig) {
+        let attemptStatus = `Cred ${credSet.id} (${credSet.username}): `;
         if (credSet.loginFailed && (Date.now() - credSet.lastLoginAttempt < 60000)) {
              console.log(`[RedBag] Skipping Cred ${credSet.id} (User: ${credSet.username}) due to recent login failure.`);
+             attemptSummaries.push(attemptStatus + "Skipped (recent login failure).");
              continue;
         }
         if (!credSet.loginData) {
@@ -178,6 +181,7 @@ async function claimRedBagIterating(bagKey) {
              await performLoginForCredential(credSet);
              if (!credSet.loginData) {
                  console.log(`[RedBag] Login failed for Cred ${credSet.id} (User: ${credSet.username}). Skipping claim attempt.`);
+                 attemptSummaries.push(attemptStatus + "Skipped (login failed prior to claim).");
                  continue;
              }
          }
@@ -188,22 +192,38 @@ async function claimRedBagIterating(bagKey) {
         if (result.success) {
             console.log(`[RedBag] Claim successful using Credential ID: ${credSet.id} (User: ${credSet.username})`);
             finalResult = result;
+            attemptSummaries.push(attemptStatus + `Successfully claimed. Message: ${result.message}`);
             break; // Detener el bucle si una credencial tuvo éxito
         } else {
             console.log(`[RedBag] Claim attempt failed with Credential ID: ${credSet.id} (User: ${credSet.username}). Message: ${result.message}`);
+            attemptSummaries.push(attemptStatus + `Failed to claim. Reason: ${result.message}`);
             if (!finalResult.success) { // Actualiza el mensaje de error solo si aún no hemos tenido éxito
                 finalResult.message = result.message; // Muestra el último error
             }
-            // Si el mensaje de error indica que la bolsa ya fue reclamada o es inválida, podríamos detenernos.
-            // Ejemplo: if (result.message.toLowerCase().includes("already been claimed") || result.message.toLowerCase().includes("invalid code")) {
-            //    console.log(`[RedBag] Stopping further attempts for ${bagKey} as it seems claimed or invalid.`);
-            //    finalResult = result; // Guardar este mensaje de error
-            //    break;
-            // }
+            // Si el mensaje de error indica que la bolsa ya fue reclamada o es inválida, detenerse.
+            const lowerCaseMessage = result.message.toLowerCase();
+            if (lowerCaseMessage.includes("already been claimed") ||
+                lowerCaseMessage.includes("invalid code") ||
+                lowerCaseMessage.includes("bag is used") || // Common phrase for already claimed
+                lowerCaseMessage.includes("bag key does not exist") || // Common phrase for invalid
+                lowerCaseMessage.includes("claimed by others") // Another common phrase
+            ) {
+               console.log(`[RedBag] Stopping further attempts for ${bagKey} as it seems already claimed or invalid based on response from Cred ${credSet.id}.`);
+               finalResult = result; // Guardar este mensaje de error conclusivo
+               break;
+            }
         }
     }
 
-    console.log(`[RedBag] Final result for bag ${bagKey}: ${JSON.stringify(finalResult)}`);
+    console.log(`\n[RedBag] Finished attempting to claim bag ${bagKey}.`);
+    console.log("Summary of attempts for bag " + bagKey + ":");
+    if (attemptSummaries.length > 0) {
+        attemptSummaries.forEach(summary => console.log("- " + summary));
+    } else {
+        console.log("- No credentials were attempted for this bag (e.g., all skipped or empty config).");
+    }
+
+    console.log(`[RedBag] Final result for bag ${bagKey}: ${JSON.stringify(finalResult)}\n`);
     return finalResult;
 }
 

@@ -3,8 +3,8 @@ const md5 = require('md5');
 require('dotenv').config(); // Carga variables de .env
 
 const API_BASE_URL = process.env.API_BASE_URL;
-const MAX_LOGIN_RETRIES = 3;
-const RETRY_DELAY_MS = 2000; // 2 segundos de espera entre reintentos
+const MAX_LOGIN_RETRIES = 1;
+const RETRY_DELAY_MS = 100; // 2 segundos de espera entre reintentos
 
 /**
  * Limpia un número de teléfono, eliminando caracteres no numéricos.
