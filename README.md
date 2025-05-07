@@ -27,7 +27,7 @@ Este es un bot de Node.js que se conecta a WhatsApp a través de Twilio para esc
 1.  **Clonar el repositorio:**
     ```bash
     git clone <url-del-repositorio>
-    cd whatsapp-redbag-bot
+    cd PiramidBot
     ```
 
 2.  **Instalar dependencias:**
@@ -53,7 +53,7 @@ Este es un bot de Node.js que se conecta a WhatsApp a través de Twilio para esc
     API_BASE_URL=https://www.videoaiinvestments.com/api
 
     # Bot Configuration
-    TARGET_GROUP_ID=whatsapp:xxxxxxxxxxxx@g.us # Opcional: Si quieres que el bot SOLO funcione en UN grupo específico, pon su ID aquí. Déjalo vacío o coméntalo para que funcione en cualquier chat.
+    # TARGET_GROUP_ID=whatsapp:xxxxxxxxxxxx@g.us # Opcional: Si quieres que el bot SOLO funcione en UN grupo específico, pon su ID aquí. Déjalo vacío o coméntalo para que funcione en cualquier chat.
     PORT=3000 # Puerto para el servidor de webhooks
     ```
     **Importante:** Asegúrate de que `API_USERNAME` tenga el formato correcto (con código de país, ej: `+57...`). El script intentará añadir `+57` si falta.
